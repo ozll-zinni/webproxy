@@ -49,7 +49,7 @@
 
 /* 메인 함수 */
 int main(void) {
-  char *buf, *p;  // 문자열을 저장할 포인터 변수들 (buf: 쿼리 스트링을 저장, p: '&'를 찾은 위치 저장)
+  char *buf, *p, *method;  // 문자열을 저장할 포인터 변수들 (buf: 쿼리 스트링을 저장, p: '&'를 찾은 위치 저장)
   char arg1[MAXLINE], arg2[MAXLINE], content[MAXLINE];  // 각각 첫 번째, 두 번째 숫자를 저장할 문자열과 응답 내용을 저장할 배열
   int n1=0, n2=0;  // 두 개의 정수를 저장할 변수 (초기값 0)
 
