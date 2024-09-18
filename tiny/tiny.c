@@ -11,9 +11,9 @@
 void doit(int fd);
 void read_requesthdrs(rio_t *rp);
 int parse_uri(char *uri, char *filename, char *cgiargs);
-void serve_static(int fd, char *filename, int filesize);
+void serve_static(int fd, char *filename, int filesize, char *method);
 void get_filetype(char *filename, char *filetype);
-void serve_dynamic(int fd, char *filename, char *cgiargs);
+void serve_dynamic(int fd, char *filename, char *cgiargs, char *method);
 void clienterror(int fd, char *cause, char *errnum, char *shortmsg,char *longmsg);
 void echo(int connfd);
 
@@ -86,7 +86,8 @@ void doit(int fd)
 
   // tiny는 get요청만 받기 때문에, post요청이 들어오면 애러 메시지를 보내고 main루틴으로 돌아와서 연결을 닫고 다음 연결을 기다린다
   /* HTTP 요청의 메서드가 "GET"가 아닌 경우에 501 오류를 클라이언트에게 반환 */
-  if (strcasecmp(method, "GET"))
+  /*Homework 11.11 "HEAD"가 아닌 경우 */
+  if (strcasecmp(method, "GET") && strcasecmp(method, "HEAD"))
   { // 조건문에서 하나라도 0이면 0
     clienterror(fd, method, "501", "Not implemented", "Tiny does not implement this method");
     return;
@@ -119,7 +120,7 @@ void doit(int fd)
       clienterror(fd, filename, "403", "Forbidden", "Tiny couldn't read the file");
       return;
     }
-    serve_static(fd, filename, sbuf.st_size); // 맞으면 정적 컨텐츠를 클라이언트에게 제공한다
+    serve_static(fd, filename, sbuf.st_size, method); // 맞으면 정적 컨텐츠를 클라이언트에게 제공한다
   }
   else { /* Serve dynamic content */
   // 요청이 동적 컨텐츠에 대한 것이라면
@@ -128,7 +129,7 @@ void doit(int fd)
       clienterror(fd, filename, "403", "Forbidden", "Tiny coundn't run the CGI program");
       return;
     }
-    serve_dynamic(fd, filename, cgiargs); //맞다면 진행해서 동적 컨텐츠를 제공한다
+    serve_dynamic(fd, filename, cgiargs, method); //맞다면 진행해서 동적 컨텐츠를 제공한다
   }
 }
 
@@ -220,7 +221,7 @@ int parse_uri(char *uri, char *filename, char *cgiargs)
 
 /* serve_static -> 정적 컨텐츠를 클라이언트에게 서비스한다 */
 //serve_static : 지역 파일의 내용 포함하는 본체를 갖는 HTTP 응답 보내기
-void serve_static(int fd, char *filename, int filesize)
+void serve_static(int fd, char *filename, int filesize, char *method)
 {
   int srcfd;                // 파일 디스크립터
   char *srcp,               // 파일 내용을 메모리에 매핑한 포인터
@@ -229,26 +230,21 @@ void serve_static(int fd, char *filename, int filesize)
 
   /* Semd response headers to client */
   /* 응답 헤더 생성 및 전송 */
-  // get_filetype(filename, filetype);                         // 파일 타입 결정
-  // sprintf(buf, "HTTP/1.0 200 OK\r\n");                      // 응답 라인 작성
-  // // 응답 헤더
-  // sprintf(buf, "%sServer: Tiny Web Server\r\n", buf);       // 서버 정보 추가
-  // sprintf(buf, "%sConnections: close\r\n", buf);            // 연결 종료 정보 추가
-  // sprintf(buf, "%sContent-length: %d\r\n", buf, filesize);  // 컨텐츠 길이 추가
-  // sprintf(buf, "%sContent-type: %s\r\n\r\n", buf, filetype); // 컨텐츠 타입 추가
-
-  get_filetype(filename, filetype);
-  snprintf(buf, sizeof(buf), "HTTP/1.0 200 OK\r\n");
-  snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "Server: Tiny Web Server\r\n");
-  snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "Connection: close\r\n");
-  snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "Content-length: %d\r\n", filesize);
-  snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "Content-type: %s\r\n\r\n", filetype);
-
+  get_filetype(filename, filetype);                         // 파일 타입 결정
+  sprintf(buf, "HTTP/1.0 200 OK\r\n");                      // 응답 라인 작성
+  // 응답 헤더
+  sprintf(buf, "%sServer: Tiny Web Server\r\n", buf);       // 서버 정보 추가
+  sprintf(buf, "%sConnections: close\r\n", buf);            // 연결 종료 정보 추가
+  sprintf(buf, "%sContent-length: %d\r\n", buf, filesize);  // 컨텐츠 길이 추가
+  sprintf(buf, "%sContent-type: %s\r\n\r\n", buf, filetype); // 컨텐츠 타입 추가
 
   /* 응답 라인과 헤더를 클라이언트에게 보냄 */
   Rio_writen(fd, buf, strlen(buf)); 
   printf("Response headers: \n");
   printf("%s", buf);
+
+  if (strcasecmp(method, "HEAD") == 0)
+    return;
 
   /* Send response body to client */
   /* 응답 바디 전송 */
@@ -286,7 +282,7 @@ void get_filetype(char *filename, char *filetype)
 }
 
 /* serve dynamic -> 동적 컨텐츠를 클라이언트에게 제공한다 */
-void serve_dynamic(int fd, char *filename, char *cgiargs)
+void serve_dynamic(int fd, char *filename, char *cgiargs, char *method)
 { 
   char buf[MAXLINE], *emptylist[] = {NULL};
 
