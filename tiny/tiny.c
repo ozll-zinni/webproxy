@@ -253,10 +253,15 @@ void serve_static(int fd, char *filename, int filesize)
   /* Send response body to client */
   /* 응답 바디 전송 */
   srcfd = Open(filename, O_RDONLY, 0);                       // 파일 열기
-  srcp = Mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0); // 파일을 메모리에 동적할당
+  // srcp = Mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0); // 파일을 메모리에 동적할당
+  /* Homework 11.9 */
+  srcp = (char *) malloc(filesize);
+  rio_readn(srcfd, srcp, filesize);
+
   Close(srcfd);                                              // 파일 닫기
   Rio_writen(fd, srcp, filesize);                           // 클라이언트에게 파일 내용 전송
-  Munmap(srcp, filesize);                                   // 메모리 할당 해제
+  // Munmap(srcp, filesize);                                   // 메모리 할당 해제
+  free(srcp);
 }
 
  /* get_filetype -> Derive file type from filename */
