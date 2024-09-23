@@ -49,7 +49,7 @@
 
 /* 메인 함수 */
 int main(void) {
-  char *buf, *p;  // 문자열을 저장할 포인터 변수들 (buf: 쿼리 스트링을 저장, p: '&'를 찾은 위치 저장)
+  char *buf, *p, *method;  // 문자열을 저장할 포인터 변수들 (buf: 쿼리 스트링을 저장, p: '&'를 찾은 위치 저장)
   char arg1[MAXLINE], arg2[MAXLINE], content[MAXLINE];  // 각각 첫 번째, 두 번째 숫자를 저장할 문자열과 응답 내용을 저장할 배열
   int n1=0, n2=0;  // 두 개의 정수를 저장할 변수 (초기값 0)
 
@@ -57,10 +57,13 @@ int main(void) {
   if ((buf = getenv("QUERY_STRING")) != NULL){  // 환경 변수 QUERY_STRING에서 데이터를 가져옴 (웹 브라우저에서 전달된 쿼리 스트링)
     p = strchr(buf, '&');  // 쿼리 스트링에서 '&' 문자를 찾아 위치를 p에 저장 (두 숫자를 구분하기 위한 문자)
     *p = '\0';  // '&' 문자를 NULL 문자로 바꿔 첫 번째 숫자와 두 번째 숫자를 분리≠
-    strcpy(arg1, buf);  // 첫 번째 숫자를 arg1에 복사
-    strcpy(arg2, p+1);  // '&' 이후의 두 번째 숫자를 arg2에 복사
-    n1 = atoi(arg1);  // 첫 번째 숫자 문자열을 정수로 변환하여 n1에 저장
-    n2 = atoi(arg2);  // 두 번째 숫자 문자열을 정수로 변환하여 n2에 저장
+    // strcpy(arg1, buf);  // 첫 번째 숫자를 arg1에 복사
+    // strcpy(arg2, p+1);  // '&' 이후의 두 번째 숫자를 arg2에 복사
+    // n1 = atoi(arg1);  // 첫 번째 숫자 문자열을 정수로 변환하여 n1에 저장
+    // n2 = atoi(arg2);  // 두 번째 숫자 문자열을 정수로 변환하여 n2에 저장
+    /* Homework 11.10*/
+    sscanf(buf, "num1=%d", &n1);
+    sscanf(p + 1, "num2=%d", &n2);
   }
 
   /* 응답 본문을 만드는 부분 */
