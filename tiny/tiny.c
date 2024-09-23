@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
   socklen_t clientlen; // 클라이언트 주소 구조체 크기
   struct sockaddr_storage clientaddr; // 클라이언트 주소 구조체
 
-
+  signal(SIGPIPE, SIG_IGN);
   /* Check command line args */
   //명령 인수 확인
   if (argc != 2) { // 인수 개수가 2가 아니면 오류 메시지 출력
